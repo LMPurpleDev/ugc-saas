@@ -1,95 +1,63 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '@/lib/api';
-import { isAuthenticated, setTokens, clearTokens } from '@/lib/auth';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import axios from 'axios';
 
-const AuthContext = createContext();
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const initAuth = async () => {
-      if (isAuthenticated()) {
-        try {
-          const response = await authAPI.getMe();
+    const loadUser = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/me`);
           setUser(response.data);
-          setIsLoggedIn(true);
-        } catch (error) {
-          console.error('Failed to get user info:', error);
-          clearTokens();
-          setIsLoggedIn(false);
         }
+      } catch (error) {
+        console.error('Failed to load user:', error);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    initAuth();
+    loadUser();
   }, []);
 
-  const login = async (credentials) => {
-    try {
-      const response = await authAPI.login(credentials);
-      const { access_token, refresh_token } = response.data;
-      
-      setTokens(access_token, refresh_token);
-      
-      // Get user info
-      const userResponse = await authAPI.getMe();
-      setUser(userResponse.data);
-      setIsLoggedIn(true);
-      
-      return { success: true };
-    } catch (error) {
-      console.error('Login failed:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || 'Login failed' 
-      };
-    }
+  const login = async (email, password) => {
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, { email, password });
+    const { access_token, refresh_token } = response.data;
+    localStorage.setItem('accessToken', access_token);
+    localStorage.setItem('refreshToken', refresh_token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+    const userResponse = await axios.get(`${import.meta.env.VITE_API_URL}/users/me`);
+    setUser(userResponse.data);
   };
 
-  const register = async (userData) => {
-    try {
-      await authAPI.register(userData);
-      return { success: true };
-    } catch (error) {
-      console.error('Registration failed:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || 'Registration failed' 
-      };
-    }
+  const register = async (username, email, password) => {
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, { username, email, password });
+    return response.data;
   };
 
   const logout = () => {
-    clearTokens();
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    delete axios.defaults.headers.common['Authorization'];
     setUser(null);
-    setIsLoggedIn(false);
-  };
-
-  const value = {
-    user,
-    isLoggedIn,
-    loading,
-    login,
-    register,
-    logout,
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+export const useAuth = () => useContext(AuthContext);
+
 
