@@ -1,23 +1,39 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, List, Dict, Any
+
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from typing import Optional, List, Dict, Any, Type
 from datetime import datetime
 from bson import ObjectId
 from enum import Enum
+from pydantic_core import core_schema
 
+# Comentário: A classe PyObjectId foi recriada para ser compatível com Pydantic v2.
+# O método __get_pydantic_core_schema__ foi implementado para instruir o Pydantic sobre como validar e serializar o tipo ObjectId.
+# A função validate_object_id é usada como validador, e a função to_str é usada como serializador.
 class PyObjectId(ObjectId):
     @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+    def __get_pydantic_core_schema__(
+        cls,
+        source_type: Any,
+        handler: Any,
+    ) -> core_schema.CoreSchema:
+        def validate_object_id(v: Any) -> ObjectId:
+            if isinstance(v, ObjectId):
+                return v
+            if isinstance(v, str) and ObjectId.is_valid(v):
+                return ObjectId(v)
+            raise ValueError("Invalid ObjectId")
 
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid objectid")
-        return ObjectId(v)
-
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
+        return core_schema.json_or_python_schema(
+            json_schema=core_schema.str_schema(),
+            python_schema=core_schema.union_schema([
+                core_schema.is_instance_schema(ObjectId),
+                core_schema.chain_schema([
+                    core_schema.str_schema(),
+                    core_schema.no_info_plain_validator_function(validate_object_id)
+                ])
+            ]),
+            serialization=core_schema.plain_serializer_function_ser_schema(lambda x: str(x)),
+        )
 
 class UserRole(str, Enum):
     CREATOR = "creator"
@@ -61,20 +77,14 @@ class UserInDB(UserBase):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
 class User(UserBase):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
 # Profile Models
 class SocialMediaLinks(BaseModel):
@@ -110,10 +120,7 @@ class ProfileInDB(ProfileBase):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
 class Profile(ProfileBase):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
@@ -121,10 +128,7 @@ class Profile(ProfileBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
 # Metrics Models
 class PostMetrics(BaseModel):
@@ -154,20 +158,14 @@ class MetricsInDB(MetricsBase):
     post_metrics: List[Dict[str, Any]] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
 class Metrics(MetricsBase):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     post_metrics: List[Dict[str, Any]] = []
     created_at: datetime
 
-    class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
 # Report Models
 class ReportType(str, Enum):
@@ -192,10 +190,7 @@ class ReportInDB(ReportBase):
     is_ready: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
 class Report(ReportBase):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
@@ -203,10 +198,7 @@ class Report(ReportBase):
     is_ready: bool = False
     created_at: datetime
 
-    class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
 # Post Feedback Models
 class FeedbackScore(BaseModel):
@@ -232,19 +224,13 @@ class PostFeedbackInDB(PostFeedbackBase):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
 class PostFeedback(PostFeedbackBase):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     created_at: datetime
 
-    class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
 # Authentication Models
 class Token(BaseModel):
@@ -278,4 +264,5 @@ class DashboardCharts(BaseModel):
     followers_evolution: List[ChartDataPoint]
     engagement_evolution: List[ChartDataPoint]
     reach_evolution: List[ChartDataPoint]
+
 

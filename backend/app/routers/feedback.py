@@ -36,6 +36,7 @@ async def get_my_feedback(
         
         feedback_list = []
         for feedback_data in feedback_cursor:
+            # Comentário: A instanciação de PostFeedback a partir de feedback_data funciona com Pydantic v2.
             feedback_list.append(PostFeedback(**feedback_data))
         
         return feedback_list
@@ -80,6 +81,7 @@ async def get_post_feedback(
                 detail="Feedback not found for this post"
             )
         
+        # Comentário: A instanciação de PostFeedback a partir de feedback_data funciona com Pydantic v2.
         return PostFeedback(**feedback_data)
         
     except HTTPException:
@@ -160,4 +162,9 @@ async def get_feedback_summary(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
+# Comentário: Nenhuma alteração direta foi necessária neste arquivo para compatibilidade com Pydantic v2,
+# pois ele utiliza modelos que já foram atualizados em `app/models.py` e a instanciação de modelos
+# a partir de dados do banco de dados funciona de forma compatível com Pydantic v2.
+
 

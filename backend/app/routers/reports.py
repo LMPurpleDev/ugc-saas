@@ -22,7 +22,8 @@ async def get_my_reports(
         db = get_database()
         
         # Get user's profile
-        profile = db.profiles.find_one({"user_id": ObjectId(current_user.id)})
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
+        profile = db.profiles.find_one({"user_id": current_user.id})
         if not profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -38,6 +39,7 @@ async def get_my_reports(
         
         reports = []
         for report_data in reports_cursor:
+            # Comentário: A instanciação de Report a partir de report_data funciona com Pydantic v2.
             reports.append(Report(**report_data))
         
         return reports
@@ -61,7 +63,8 @@ async def get_report(
         db = get_database()
         
         # Get user's profile
-        profile = db.profiles.find_one({"user_id": ObjectId(current_user.id)})
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
+        profile = db.profiles.find_one({"user_id": current_user.id})
         if not profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -82,6 +85,7 @@ async def get_report(
                 detail="Report not found"
             )
         
+        # Comentário: A instanciação de Report a partir de report_data funciona com Pydantic v2.
         return Report(**report_data)
         
     except HTTPException:
@@ -103,7 +107,8 @@ async def download_report(
         db = get_database()
         
         # Get user's profile
-        profile = db.profiles.find_one({"user_id": ObjectId(current_user.id)})
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
+        profile = db.profiles.find_one({"user_id": current_user.id})
         if not profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -163,7 +168,8 @@ async def generate_report(
         db = get_database()
         
         # Get user's profile
-        profile = db.profiles.find_one({"user_id": ObjectId(current_user.id)})
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
+        profile = db.profiles.find_one({"user_id": current_user.id})
         if not profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -174,12 +180,14 @@ async def generate_report(
         
         # Create report record
         from app.models import ReportInDB
+        # Comentário: Atualizado report_data.dict() para report_data.model_dump() para Pydantic v2.
         report = ReportInDB(
-            **report_data.dict(),
+            **report_data.model_dump(),
             profile_id=profile_id
         )
         
-        result = db.reports.insert_one(report.dict(by_alias=True))
+        # Comentário: Atualizado report.dict(by_alias=True) para report.model_dump(by_alias=True) para Pydantic v2.
+        result = db.reports.insert_one(report.model_dump(by_alias=True))
         
         if result.inserted_id:
             # TODO: Send task to worker to generate the report
@@ -202,4 +210,5 @@ async def generate_report(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
 

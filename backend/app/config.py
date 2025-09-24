@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 import os
 
@@ -31,8 +31,9 @@ class Settings(BaseSettings):
     # CORS
     allowed_origins: list = ["http://localhost:3000", "http://frontend:3000"]
     
-    class Config:
-        env_file = ".env"
+    # Comentário: Configuração de modelo atualizada para Pydantic v2 usando SettingsConfigDict.
+    model_config = SettingsConfigDict(env_file=".env")
 
 settings = Settings()
+
 

@@ -70,6 +70,7 @@ async def get_user_by_email(email: str) -> Optional[User]:
         user_data = db.users.find_one({"email": email})
         
         if user_data:
+            # Comentário: A instanciação de User a partir de user_data funciona com Pydantic v2.
             return User(**user_data)
         return None
         
@@ -84,6 +85,7 @@ async def get_user_by_id(user_id: str) -> Optional[User]:
         user_data = db.users.find_one({"_id": ObjectId(user_id)})
         
         if user_data:
+            # Comentário: A instanciação de User a partir de user_data funciona com Pydantic v2.
             return User(**user_data)
         return None
         
@@ -103,6 +105,7 @@ async def authenticate_user(email: str, password: str) -> Optional[User]:
         if not verify_password(password, user_data["hashed_password"]):
             return None
             
+        # Comentário: A instanciação de User a partir de user_data funciona com Pydantic v2.
         return User(**user_data)
         
     except Exception as e:
@@ -165,4 +168,5 @@ def refresh_access_token(refresh_token: str) -> Optional[str]:
     except Exception as e:
         logger.error(f"Error refreshing access token: {e}")
         return None
+
 

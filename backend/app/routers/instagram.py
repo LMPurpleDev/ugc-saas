@@ -20,6 +20,7 @@ async def get_instagram_auth_url(
     try:
         # Use user ID as state if not provided
         if not state:
+            # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
             state = str(current_user.id)
         
         auth_url = instagram_service.get_authorization_url(state)
@@ -55,10 +56,11 @@ async def instagram_callback(
             )
         
         # Calculate expiration date
-        expires_at = datetime.utcnow() + timedelta(seconds=token_data.get('expires_in', 5184000))
+        expires_at = datetime.utcnow() + timedelta(seconds=token_data.get("expires_in", 5184000))
         
         # Get user's profile
-        profile = db.profiles.find_one({"user_id": ObjectId(current_user.id)})
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
+        profile = db.profiles.find_one({"user_id": current_user.id})
         if not profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -67,21 +69,22 @@ async def instagram_callback(
         
         # Update profile with Instagram tokens
         instagram_tokens = {
-            "access_token": token_data['access_token'],
-            "user_id": token_data['user_id'],
+            "access_token": token_data["access_token"],
+            "user_id": token_data["user_id"],
             "expires_at": expires_at
         }
         
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
         result = db.profiles.update_one(
-            {"user_id": ObjectId(current_user.id)},
+            {"user_id": current_user.id},
             {"$set": {"instagram_tokens": instagram_tokens}}
         )
         
         if result.modified_count:
             # Get Instagram user info
             user_info = instagram_service.get_user_info(
-                token_data['access_token'], 
-                token_data['user_id']
+                token_data["access_token"], 
+                token_data["user_id"]
             )
             
             return {
@@ -109,8 +112,9 @@ async def disconnect_instagram(current_user: User = Depends(get_current_active_u
     try:
         db = get_database()
         
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
         result = db.profiles.update_one(
-            {"user_id": ObjectId(current_user.id)},
+            {"user_id": current_user.id},
             {"$unset": {"instagram_tokens": ""}}
         )
         
@@ -137,14 +141,15 @@ async def get_instagram_status(current_user: User = Depends(get_current_active_u
     try:
         db = get_database()
         
-        profile = db.profiles.find_one({"user_id": ObjectId(current_user.id)})
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
+        profile = db.profiles.find_one({"user_id": current_user.id})
         if not profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Profile not found"
             )
         
-        instagram_tokens = profile.get('instagram_tokens')
+        instagram_tokens = profile.get("instagram_tokens")
         if not instagram_tokens:
             return {
                 "connected": False,
@@ -152,15 +157,15 @@ async def get_instagram_status(current_user: User = Depends(get_current_active_u
             }
         
         # Check if token is expired
-        expires_at = instagram_tokens.get('expires_at')
+        expires_at = instagram_tokens.get("expires_at")
         is_expired = expires_at and datetime.utcnow() > expires_at
         
         # Get basic user info if connected and not expired
         user_info = None
         if not is_expired:
             user_info = instagram_service.get_user_info(
-                instagram_tokens['access_token'],
-                instagram_tokens['user_id']
+                instagram_tokens["access_token"],
+                instagram_tokens["user_id"]
             )
         
         return {
@@ -186,14 +191,15 @@ async def collect_instagram_metrics(current_user: User = Depends(get_current_act
         db = get_database()
         
         # Get user's profile
-        profile = db.profiles.find_one({"user_id": ObjectId(current_user.id)})
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
+        profile = db.profiles.find_one({"user_id": current_user.id})
         if not profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Profile not found"
             )
         
-        profile_id = str(profile['_id'])
+        profile_id = str(profile["_id"])
         
         # Collect metrics
         success = await instagram_service.collect_user_metrics(profile_id)
@@ -225,14 +231,15 @@ async def get_recent_instagram_posts(
         db = get_database()
         
         # Get user's profile
-        profile = db.profiles.find_one({"user_id": ObjectId(current_user.id)})
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
+        profile = db.profiles.find_one({"user_id": current_user.id})
         if not profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Profile not found"
             )
         
-        instagram_tokens = profile.get('instagram_tokens')
+        instagram_tokens = profile.get("instagram_tokens")
         if not instagram_tokens:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -241,9 +248,8 @@ async def get_recent_instagram_posts(
         
         # Get recent posts
         posts = instagram_service.get_user_media(
-            instagram_tokens['access_token'],
-            instagram_tokens['user_id'],
-            limit=limit
+            instagram_tokens["access_token"],
+            instagram_tokens["user_id"]
         )
         
         if posts is None:
@@ -262,4 +268,5 @@ async def get_recent_instagram_posts(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
 

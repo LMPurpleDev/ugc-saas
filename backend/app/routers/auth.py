@@ -34,12 +34,14 @@ async def register(user: UserCreate):
         
         # Create new user
         hashed_password = get_password_hash(user.password)
+        # Comentário: Atualizado user.dict(exclude={"password"}) para user.model_dump(exclude={"password"}) para Pydantic v2.
         user_data = UserInDB(
-            **user.dict(exclude={"password"}),
+            **user.model_dump(exclude={"password"}),
             hashed_password=hashed_password
         )
         
-        result = db.users.insert_one(user_data.dict(by_alias=True))
+        # Comentário: Atualizado user_data.dict(by_alias=True) para user_data.model_dump(by_alias=True) para Pydantic v2.
+        result = db.users.insert_one(user_data.model_dump(by_alias=True))
         
         if result.inserted_id:
             return {"message": "User created successfully", "user_id": str(result.inserted_id)}
@@ -121,4 +123,5 @@ async def refresh_token(credentials: HTTPAuthorizationCredentials = Depends(secu
 async def get_current_user_info(current_user: User = Depends(authenticate_user)):
     """Get current user information"""
     return current_user
+
 

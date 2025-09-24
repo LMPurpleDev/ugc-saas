@@ -23,7 +23,8 @@ async def create_profile(
         db = get_database()
         
         # Check if user already has a profile
-        existing_profile = db.profiles.find_one({"user_id": ObjectId(current_user.id)})
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
+        existing_profile = db.profiles.find_one({"user_id": current_user.id})
         if existing_profile:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -31,15 +32,19 @@ async def create_profile(
             )
         
         # Create new profile
+        # Comentário: Atualizado profile.dict() para profile.model_dump() para Pydantic v2.
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
         profile_data = ProfileInDB(
-            **profile.dict(),
-            user_id=ObjectId(current_user.id)
+            **profile.model_dump(),
+            user_id=current_user.id
         )
         
-        result = db.profiles.insert_one(profile_data.dict(by_alias=True))
+        # Comentário: Atualizado profile_data.dict(by_alias=True) para profile_data.model_dump(by_alias=True) para Pydantic v2.
+        result = db.profiles.insert_one(profile_data.model_dump(by_alias=True))
         
         if result.inserted_id:
             created_profile = db.profiles.find_one({"_id": result.inserted_id})
+            # Comentário: A instanciação de Profile a partir de created_profile funciona com Pydantic v2.
             return Profile(**created_profile)
         else:
             raise HTTPException(
@@ -61,7 +66,8 @@ async def get_my_profile(current_user: User = Depends(get_current_active_user)):
     """Get current user's profile"""
     try:
         db = get_database()
-        profile_data = db.profiles.find_one({"user_id": ObjectId(current_user.id)})
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
+        profile_data = db.profiles.find_one({"user_id": current_user.id})
         
         if not profile_data:
             raise HTTPException(
@@ -69,6 +75,7 @@ async def get_my_profile(current_user: User = Depends(get_current_active_user)):
                 detail="Profile not found"
             )
         
+        # Comentário: A instanciação de Profile a partir de profile_data funciona com Pydantic v2.
         return Profile(**profile_data)
         
     except HTTPException:
@@ -90,7 +97,8 @@ async def update_my_profile(
         db = get_database()
         
         # Get existing profile
-        existing_profile = db.profiles.find_one({"user_id": ObjectId(current_user.id)})
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
+        existing_profile = db.profiles.find_one({"user_id": current_user.id})
         if not existing_profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -98,19 +106,24 @@ async def update_my_profile(
             )
         
         # Update profile
-        update_data = profile_update.dict(exclude_unset=True)
+        # Comentário: Atualizado profile_update.dict(exclude_unset=True) para profile_update.model_dump(exclude_unset=True) para Pydantic v2.
+        update_data = profile_update.model_dump(exclude_unset=True)
         update_data["updated_at"] = datetime.utcnow()
         
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
         result = db.profiles.update_one(
-            {"user_id": ObjectId(current_user.id)},
+            {"user_id": current_user.id},
             {"$set": update_data}
         )
         
         if result.modified_count:
-            updated_profile = db.profiles.find_one({"user_id": ObjectId(current_user.id)})
+            # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
+            updated_profile = db.profiles.find_one({"user_id": current_user.id})
+            # Comentário: A instanciação de Profile a partir de updated_profile funciona com Pydantic v2.
             return Profile(**updated_profile)
         else:
             # Return existing profile if no changes were made
+            # Comentário: A instanciação de Profile a partir de existing_profile funciona com Pydantic v2.
             return Profile(**existing_profile)
             
     except HTTPException:
@@ -129,7 +142,8 @@ async def get_dashboard_data(current_user: User = Depends(get_current_active_use
         db = get_database()
         
         # Get user's profile
-        profile = db.profiles.find_one({"user_id": ObjectId(current_user.id)})
+        # Comentário: current_user.id já é um ObjectId após a refatoração de PyObjectId.
+        profile = db.profiles.find_one({"user_id": current_user.id})
         if not profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -216,9 +230,11 @@ async def get_dashboard_data(current_user: User = Depends(get_current_active_use
             reach_evolution=reach_evolution
         )
         
+        # Comentário: Atualizado stats.dict() para stats.model_dump() para Pydantic v2.
+        # Comentário: Atualizado charts.dict() para charts.model_dump() para Pydantic v2.
         return {
-            "stats": stats.dict(),
-            "charts": charts.dict()
+            "stats": stats.model_dump(),
+            "charts": charts.model_dump()
         }
         
     except HTTPException:
@@ -229,4 +245,5 @@ async def get_dashboard_data(current_user: User = Depends(get_current_active_use
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
 

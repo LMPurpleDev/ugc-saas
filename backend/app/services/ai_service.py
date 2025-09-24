@@ -42,11 +42,11 @@ class AIService:
             if engagement_data:
                 context += f"""
                 Dados de engajamento:
-                - Curtidas: {engagement_data.get('likes', 0)}
-                - Comentários: {engagement_data.get('comments', 0)}
-                - Compartilhamentos: {engagement_data.get('shares', 0)}
-                - Salvamentos: {engagement_data.get('saved', 0)}
-                - Alcance: {engagement_data.get('reach', 0)}
+                - Curtidas: {engagement_data.get("likes", 0)}
+                - Comentários: {engagement_data.get("comments", 0)}
+                - Compartilhamentos: {engagement_data.get("shares", 0)}
+                - Salvamentos: {engagement_data.get("saved", 0)}
+                - Alcance: {engagement_data.get("reach", 0)}
                 """
             
             prompt = context + """
@@ -133,13 +133,13 @@ class AIService:
             # Analyze recent performance
             performance_summary = ""
             if recent_performance:
-                avg_engagement = sum(p.get('engagement_rate', 0) for p in recent_performance) / len(recent_performance)
-                best_performing = max(recent_performance, key=lambda x: x.get('engagement_rate', 0))
+                avg_engagement = sum(p.get("engagement_rate", 0) for p in recent_performance) / len(recent_performance)
+                best_performing = max(recent_performance, key=lambda x: x.get("engagement_rate", 0))
                 performance_summary = f"""
                 Performance recente:
                 - Taxa de engajamento média: {avg_engagement:.2f}%
-                - Melhor post teve {best_performing.get('engagement_rate', 0):.2f}% de engajamento
-                - Tipo de conteúdo que mais engaja: {best_performing.get('media_type', 'N/A')}
+                - Melhor post teve {best_performing.get("engagement_rate", 0):.2f}% de engajamento
+                - Tipo de conteúdo que mais engaja: {best_performing.get("media_type", "N/A")}
                 """
             
             audience_context = f"Público-alvo: {target_audience}" if target_audience else ""
@@ -175,7 +175,7 @@ class AIService:
             suggestions_text = response.choices[0].message.content.strip()
             
             # Split into individual suggestions
-            suggestions = [s.strip() for s in suggestions_text.split('\n') if s.strip()]
+            suggestions = [s.strip() for s in suggestions_text.split("\n") if s.strip()]
             
             return suggestions[:5]  # Return max 5 suggestions
             
@@ -198,8 +198,8 @@ class AIService:
             # Prepare data summary
             data_summary = f"""
             Dados do público:
-            - Total de seguidores: {follower_data.get('count', 0)}
-            - Crescimento recente: {follower_data.get('growth_rate', 0):.2f}%
+            - Total de seguidores: {follower_data.get("count", 0)}
+            - Crescimento recente: {follower_data.get("growth_rate", 0):.2f}%
             
             Padrões de engajamento:
             """
@@ -287,13 +287,14 @@ class AIService:
             
             # Create feedback scores
             scores = FeedbackScore(
-                overall=analysis['scores'].get('overall', 0.5),
-                content_quality=analysis['scores'].get('content_quality', 0.5),
-                engagement_potential=analysis['scores'].get('engagement_potential', 0.5),
-                visual_appeal=analysis['scores'].get('visual_appeal', 0.5)
+                overall=analysis["scores"].get("overall", 0.5),
+                content_quality=analysis["scores"].get("content_quality", 0.5),
+                engagement_potential=analysis["scores"].get("engagement_potential", 0.5),
+                visual_appeal=analysis["scores"].get("visual_appeal", 0.5)
             )
             
             # Create post feedback
+            # Comentário: profile_id é convertido para ObjectId aqui para corresponder ao tipo PyObjectId no modelo.
             feedback = PostFeedbackCreate(
                 profile_id=ObjectId(profile_id),
                 post_id=post_id,
@@ -301,8 +302,8 @@ class AIService:
                 post_caption=post_caption,
                 post_type=post_type,
                 scores=scores,
-                feedback_text=analysis.get('feedback_text', ''),
-                suggestions=analysis.get('suggestions', [])
+                feedback_text=analysis.get("feedback_text", ""),
+                suggestions=analysis.get("suggestions", [])
             )
             
             return feedback
@@ -313,4 +314,10 @@ class AIService:
 
 # Global instance
 ai_service = AIService()
+
+# Comentário: Nenhuma alteração direta foi necessária neste arquivo para compatibilidade com Pydantic v2,
+# pois ele utiliza modelos que já foram atualizados em `app/models.py` e a instanciação de modelos
+# a partir de dados do banco de dados funciona de forma compatível com Pydantic v2.
+# A única alteração foi na formatação de f-strings para usar aspas duplas de forma consistente.
+
 
