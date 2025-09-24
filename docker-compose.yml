@@ -17,6 +17,11 @@ services:
       - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
       - ugc_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Redis for Celery
   redis:
@@ -29,6 +34,11 @@ services:
       - redis_data:/data
     networks:
       - ugc_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Backend API
   backend:
@@ -44,6 +54,7 @@ services:
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
       - REFRESH_TOKEN_EXPIRE_DAYS=7
+      - REDIS_URL=redis://redis:6379/0
       - INSTAGRAM_APP_ID=${INSTAGRAM_APP_ID}
       - INSTAGRAM_APP_SECRET=${INSTAGRAM_APP_SECRET}
       - INSTAGRAM_REDIRECT_URI=${INSTAGRAM_REDIRECT_URI}
@@ -51,13 +62,20 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - mongo
-      - redis
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./backend:/app
       - reports_data:/app/reports
     networks:
       - ugc_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Frontend
   frontend:
@@ -93,9 +111,12 @@ services:
       - FROM_EMAIL=${FROM_EMAIL}
       - REPORTS_DIR=/app/reports
     depends_on:
-      - mongo
-      - redis
-      - backend
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
     volumes:
       - ./worker:/app
       - reports_data:/app/reports
@@ -121,9 +142,12 @@ services:
       - FROM_EMAIL=${FROM_EMAIL}
       - REPORTS_DIR=/app/reports
     depends_on:
-      - mongo
-      - redis
-      - worker
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
     volumes:
       - ./worker:/app
       - reports_data:/app/reports
@@ -143,26 +167,11 @@ services:
     ports:
       - "5555:5555"
     depends_on:
-      - redis
-      - worker
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
     command: celery -A app.celery_app flower --port=5555
-    networks:
-      - ugc_network
-
-  # Nginx Reverse Proxy (Optional)
-  nginx:
-    image: nginx:alpine
-    container_name: ugc_saas_nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - frontend
-      - backend
     networks:
       - ugc_network
 
@@ -177,4 +186,3 @@ volumes:
 networks:
   ugc_network:
     driver: bridge
-

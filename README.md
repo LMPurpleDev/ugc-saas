@@ -2,6 +2,47 @@
 
 Uma plataforma completa para criadores de conteúdo UGC (User Generated Content) que oferece análise de performance, relatórios automáticos e direcionamento de carreira usando inteligência artificial.
 
+## 🚀 Instalação Rápida no WSL Ubuntu 22.04.5 LTS
+
+### Pré-requisitos
+- WSL com Ubuntu 22.04.5 LTS
+- Git
+
+### 1. Clone o repositório
+```bash
+git clone https://github.com/LMPurpleDev/ugc-saas.git
+cd ugc-saas
+```
+
+### 2. Instale o Docker (se não estiver instalado)
+```bash
+chmod +x install-docker.sh
+./install-docker.sh
+```
+
+Após a instalação, execute:
+```bash
+newgrp docker
+```
+
+### 3. Configure as variáveis de ambiente
+```bash
+cp .env.example .env
+# Edite o arquivo .env com suas chaves de API
+nano .env
+```
+
+### 4. Inicie todos os serviços
+```bash
+docker compose up --build
+```
+
+### 5. Acesse a aplicação
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **Documentação API**: http://localhost:8000/docs
+- **Flower (Monitor)**: http://localhost:5555
+
 ## 🚀 Funcionalidades
 
 ### 📊 Dashboard Completo
@@ -45,6 +86,7 @@ Uma plataforma completa para criadores de conteúdo UGC (User Generated Content)
 
 ### Frontend
 - **React** - Interface de usuário
+- **Vite** - Build tool moderna
 - **Tailwind CSS** - Estilização
 - **shadcn/ui** - Componentes
 - **Recharts** - Gráficos interativos
@@ -55,35 +97,6 @@ Uma plataforma completa para criadores de conteúdo UGC (User Generated Content)
 - **Docker Compose** - Orquestração
 - **Nginx** - Proxy reverso
 - **Celery Beat** - Agendamento de tarefas
-
-## 🚀 Instalação Rápida
-
-### Pré-requisitos
-- Docker e Docker Compose
-- Git
-
-### 1. Clone o repositório
-```bash
-git clone https://github.com/seu-usuario/ugc-saas.git
-cd ugc-saas
-```
-
-### 2. Configure as variáveis de ambiente
-```bash
-cp .env.example .env
-# Edite o arquivo .env com suas chaves de API
-```
-
-### 3. Inicie todos os serviços
-```bash
-docker-compose up --build
-```
-
-### 4. Acesse a aplicação
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **Documentação API**: http://localhost:8000/docs
-- **Flower (Monitor)**: http://localhost:5555
 
 ## ⚙️ Configuração
 
@@ -153,16 +166,16 @@ make flower
 ### Comandos Docker Compose
 ```bash
 # Iniciar em background
-docker-compose up -d
+docker compose up -d
 
 # Ver logs de um serviço específico
-docker-compose logs -f backend
+docker compose logs -f backend
 
 # Executar comando no container
-docker-compose exec backend python manage.py shell
+docker compose exec backend python manage.py shell
 
 # Rebuild de um serviço
-docker-compose build backend
+docker compose build backend
 ```
 
 ## 🏗️ Arquitetura
@@ -209,6 +222,7 @@ ugc-saas/
 │   └── Dockerfile
 ├── nginx/                  # Configuração Nginx
 ├── scripts/                # Scripts de inicialização
+├── install-docker.sh       # Script de instalação do Docker
 └── docker-compose.yml      # Orquestração
 ```
 
@@ -225,10 +239,10 @@ ugc-saas/
 
 ```bash
 # Testes do backend
-docker-compose exec backend python -m pytest
+docker compose exec backend python -m pytest
 
 # Testes do frontend
-docker-compose exec frontend npm test
+docker compose exec frontend npm test
 
 # Testes de integração
 make test
@@ -244,10 +258,10 @@ make test
 ### Logs
 ```bash
 # Todos os serviços
-docker-compose logs -f
+docker compose logs -f
 
 # Serviço específico
-docker-compose logs -f backend
+docker compose logs -f backend
 ```
 
 ### Health Checks
@@ -296,7 +310,6 @@ A documentação completa da API está disponível em:
 - **ReDoc**: http://localhost:8000/redoc
 
 ### Principais Endpoints
-
 ```
 POST /auth/register          # Registro de usuário
 POST /auth/login            # Login
@@ -338,5 +351,20 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para de
 
 ---
 
-**Desenvolvido com ❤️ para criadores de conteúdo**
+Desenvolvido com ❤️ para criadores de conteúdo
 
+## 🔧 Correções Implementadas
+
+### Versão Corrigida - WSL Ubuntu 22.04.5 LTS
+- ✅ Dockerfile do frontend otimizado (npm ao invés de pnpm)
+- ✅ Health checks adicionados ao docker-compose
+- ✅ Dependências do frontend atualizadas e compatíveis
+- ✅ Script de instalação do Docker incluído
+- ✅ Configurações do Vite, Tailwind e PostCSS corrigidas
+- ✅ Requirements.txt limpos e organizados
+- ✅ Documentação atualizada com instruções específicas para WSL
+
+### Para usar:
+1. Execute o script `./install-docker.sh` no seu WSL
+2. Configure o arquivo `.env` com suas API keys
+3. Execute `docker compose up --build`
