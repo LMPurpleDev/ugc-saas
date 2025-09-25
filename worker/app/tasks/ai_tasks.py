@@ -292,5 +292,53 @@ def generate_profile_content_suggestions(self, profile_id: str):
                     'date': metric.get('date')
                 })
         
-        #
-
+        # Generate content suggestions using AI
+        suggestions = ai_service.generate_content_suggestions(
+            profile_id=profile_id,
+            niche=niche,
+            performance_data=recent_performance
+        )
+        
+        # Save suggestions to database
+        if suggestions:
+            result = db.content_suggestions.insert_one({
+                'profile_id': ObjectId(profile_id),
+                'suggestions': suggestions,
+                'created_at': datetime.utcnow(),
+                'niche': niche
+            })
+            
+            if result.inserted_id:
+                logger.info(f"Generated {len(suggestions)} content suggestions for profile {profile_id}")
+                return {
+                    'profile_id': profile_id,
+                    'success': True,
+                    'suggestion_count': len(suggestions),
+                    'completed_at': datetime.utcnow().isoformat()
+                }
+            else:
+                logger.error(f"Failed to save suggestions for profile {profile_id}")
+                return {
+                    'profile_id': profile_id,
+                    'success': False,
+                    'error': 'Failed to save suggestions',
+                    'completed_at': datetime.utcnow().isoformat()
+                }
+                
+        else:
+            logger.warning(f"No suggestions generated for profile {profile_id}")
+            return {
+                'profile_id': profile_id,
+                'success': True,
+                'suggestion_count': 0,
+                'completed_at': datetime.utcnow().isoformat()
+            }
+            
+    except Exception as e:
+        logger.error(f"Error generating content suggestions for profile {profile_id}: {e}")
+        return {
+            'profile_id': profile_id,
+            'success': False,
+            'error': str(e),
+            'completed_at': datetime.utcnow().isoformat()
+        }

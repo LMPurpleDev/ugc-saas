@@ -3,14 +3,13 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies (gcc, g++, curl)
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
+# Copy requirements
 COPY requirements.txt .
 
 # Install Python dependencies
@@ -19,15 +18,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create directories for reports and uploads
-RUN mkdir -p /app/reports /app/uploads
-
-# Expose port
-EXPOSE 8000
-
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Expose port for Flower
+EXPOSE 5555
+
+# Run Flower
+CMD ["celery", "-A", "app.celery_app", "flower", "--port=5555", "--broker=redis://redis:6379/0"]

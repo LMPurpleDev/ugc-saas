@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.9"
 
 services:
   # MongoDB Database
@@ -46,21 +46,21 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: ugc_saas_backend
-    restart: unless-stopped
+    restart: "no"  # Não reinicia automaticamente
     environment:
-      - MONGODB_URL=mongodb://admin:password123@mongo:27017/ugc_saas?authSource=admin
-      - DATABASE_NAME=ugc_saas
-      - SECRET_KEY=your-super-secret-key-change-in-production
-      - ALGORITHM=HS256
-      - ACCESS_TOKEN_EXPIRE_MINUTES=30
-      - REFRESH_TOKEN_EXPIRE_DAYS=7
-      - REDIS_URL=redis://redis:6379/0
-      - INSTAGRAM_APP_ID=${INSTAGRAM_APP_ID}
-      - INSTAGRAM_APP_SECRET=${INSTAGRAM_APP_SECRET}
-      - INSTAGRAM_REDIRECT_URI=${INSTAGRAM_REDIRECT_URI}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      MONGODB_URL: mongodb://admin:password123@mongo:27017/ugc_saas?authSource=admin
+      DATABASE_NAME: ugc_saas
+      SECRET_KEY: your-super-secret-key-change-in-production
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+      REDIS_URL: redis://redis:6379/0
+      INSTAGRAM_APP_ID: ${INSTAGRAM_APP_ID}
+      INSTAGRAM_APP_SECRET: ${INSTAGRAM_APP_SECRET}
+      INSTAGRAM_REDIRECT_URI: ${INSTAGRAM_REDIRECT_URI}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
     ports:
-      - "8000:8000"
+      - "8001:8000"  # Porta alterada
     depends_on:
       mongo:
         condition: service_healthy
@@ -85,11 +85,12 @@ services:
     container_name: ugc_saas_frontend
     restart: unless-stopped
     environment:
-      - VITE_API_URL=http://localhost:8000
+      VITE_API_URL: http://localhost:8001  # Aponta para a nova porta
     ports:
       - "3000:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - ugc_network
 
@@ -101,15 +102,15 @@ services:
     container_name: ugc_saas_worker
     restart: unless-stopped
     environment:
-      - MONGODB_URL=mongodb://admin:password123@mongo:27017/ugc_saas?authSource=admin
-      - DATABASE_NAME=ugc_saas
-      - REDIS_URL=redis://redis:6379/0
-      - INSTAGRAM_APP_ID=${INSTAGRAM_APP_ID}
-      - INSTAGRAM_APP_SECRET=${INSTAGRAM_APP_SECRET}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
-      - FROM_EMAIL=${FROM_EMAIL}
-      - REPORTS_DIR=/app/reports
+      MONGODB_URL: mongodb://admin:password123@mongo:27017/ugc_saas?authSource=admin
+      DATABASE_NAME: ugc_saas
+      REDIS_URL: redis://redis:6379/0
+      INSTAGRAM_APP_ID: ${INSTAGRAM_APP_ID}
+      INSTAGRAM_APP_SECRET: ${INSTAGRAM_APP_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      FROM_EMAIL: ${FROM_EMAIL}
+      REPORTS_DIR: /app/reports
     depends_on:
       mongo:
         condition: service_healthy
@@ -132,15 +133,15 @@ services:
     container_name: ugc_saas_beat
     restart: unless-stopped
     environment:
-      - MONGODB_URL=mongodb://admin:password123@mongo:27017/ugc_saas?authSource=admin
-      - DATABASE_NAME=ugc_saas
-      - REDIS_URL=redis://redis:6379/0
-      - INSTAGRAM_APP_ID=${INSTAGRAM_APP_ID}
-      - INSTAGRAM_APP_SECRET=${INSTAGRAM_APP_SECRET}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
-      - FROM_EMAIL=${FROM_EMAIL}
-      - REPORTS_DIR=/app/reports
+      MONGODB_URL: mongodb://admin:password123@mongo:27017/ugc_saas?authSource=admin
+      DATABASE_NAME: ugc_saas
+      REDIS_URL: redis://redis:6379/0
+      INSTAGRAM_APP_ID: ${INSTAGRAM_APP_ID}
+      INSTAGRAM_APP_SECRET: ${INSTAGRAM_APP_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      FROM_EMAIL: ${FROM_EMAIL}
+      REPORTS_DIR: /app/reports
     depends_on:
       mongo:
         condition: service_healthy
@@ -163,7 +164,8 @@ services:
     container_name: ugc_saas_flower
     restart: unless-stopped
     environment:
-      - REDIS_URL=redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
     ports:
       - "5555:5555"
     depends_on:
@@ -171,7 +173,7 @@ services:
         condition: service_healthy
       worker:
         condition: service_started
-    command: celery -A app.celery_app flower --port=5555
+    command: celery -A app.celery_app flower --port=5555 --broker=redis://redis:6379/0
     networks:
       - ugc_network
 
