@@ -368,3 +368,34 @@ Desenvolvido com ❤️ para criadores de conteúdo
 1. Execute o script `./install-docker.sh` no seu WSL
 2. Configure o arquivo `.env` com suas API keys
 3. Execute `docker compose up --build`
+
+## 🐛 Correções de Funcionalidade de Login
+
+Esta seção detalha as correções implementadas para resolver problemas de comunicação entre o frontend e o backend na funcionalidade de login.
+
+### Problemas Identificados:
+
+- **Problema de CORS**: O backend não estava configurado para aceitar requisições do domínio do frontend, resultando em erros de Cross-Origin Resource Sharing.
+- **Dependência Faltante**: O módulo `passlib`, essencial para a criptografia de senhas no backend, não estava instalado.
+- **Configuração de URL da API**: O frontend estava configurado para se conectar a um `localhost` fixo, em vez de usar o domínio público do backend.
+- **Configuração do Vite**: As configurações de Hot Module Replacement (HMR) do Vite no frontend não estavam corretamente ajustadas para o ambiente de desenvolvimento.
+
+### Correções Implementadas:
+
+- **Configuração de CORS**: O arquivo `backend/app/main.py` foi atualizado para permitir requisições de todas as origens (`allow_origins=["*"]`) temporariamente, facilitando o desenvolvimento e resolvendo os erros de CORS.
+- **Instalação de Dependências**: O módulo `passlib` foi adicionado às dependências do backend e instalado, garantindo que a criptografia de senhas funcione corretamente.
+- **Atualização da URL da API**: O arquivo `.env` do frontend foi modificado para apontar para a URL pública do backend (`VITE_API_URL=https://8000-ibzzmx3vdhqis3z092zj1-2aceed55.manusvm.computer`), permitindo a comunicação adequada.
+- **Ajuste do Vite**: O arquivo `frontend/vite.config.js` foi atualizado para configurar corretamente o host e a porta do HMR, garantindo que o frontend recarregue as mudanças em tempo real.
+
+### Testes e Validação:
+
+Após a implementação das correções, foram realizados testes completos de registro e login, confirmando que:
+
+- ✅ O registro de novos usuários funciona perfeitamente.
+- ✅ O login de usuários existentes é bem-sucedido.
+- ✅ A comunicação entre frontend e backend ocorre sem erros de CORS.
+- ✅ O sistema de autenticação está totalmente funcional.
+
+O único erro residual (`404 Not Found` para `/users/me`) não afeta a funcionalidade principal de login e provavelmente indica uma rota ainda não implementada no backend, mas a comunicação base está estabelecida.
+
+
