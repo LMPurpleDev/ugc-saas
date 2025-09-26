@@ -5,7 +5,7 @@ services:
   mongo:
     image: mongo:7.0
     container_name: ugc_saas_mongo
-    restart: unless-stopped
+    restart: "no"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password123
@@ -27,7 +27,7 @@ services:
   redis:
     image: redis:7.2-alpine
     container_name: ugc_saas_redis
-    restart: unless-stopped
+    restart: "no"
     ports:
       - "6379:6379"
     volumes:
@@ -46,7 +46,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: ugc_saas_backend
-    restart: "no"  # Não reinicia automaticamente
+    restart: "no"
     environment:
       MONGODB_URL: mongodb://admin:password123@mongo:27017/ugc_saas?authSource=admin
       DATABASE_NAME: ugc_saas
@@ -83,7 +83,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: ugc_saas_frontend
-    restart: unless-stopped
+    restart: "no"
     environment:
       VITE_API_URL: http://localhost:8001  # Aponta para a nova porta
     ports:
@@ -100,7 +100,7 @@ services:
       context: ./worker
       dockerfile: Dockerfile
     container_name: ugc_saas_worker
-    restart: unless-stopped
+    restart: "no"
     environment:
       MONGODB_URL: mongodb://admin:password123@mongo:27017/ugc_saas?authSource=admin
       DATABASE_NAME: ugc_saas
@@ -131,7 +131,7 @@ services:
       context: ./worker
       dockerfile: Dockerfile
     container_name: ugc_saas_beat
-    restart: unless-stopped
+    restart: "no"
     environment:
       MONGODB_URL: mongodb://admin:password123@mongo:27017/ugc_saas?authSource=admin
       DATABASE_NAME: ugc_saas
@@ -162,7 +162,7 @@ services:
       context: ./worker
       dockerfile: Dockerfile
     container_name: ugc_saas_flower
-    restart: unless-stopped
+    restart: "no"
     environment:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0

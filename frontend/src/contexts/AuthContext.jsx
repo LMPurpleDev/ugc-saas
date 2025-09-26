@@ -1,74 +1,87 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+// src/contexts/AuthContext.jsx
+import React, { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const apiUrl = import.meta.env.VITE_API_URL;
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/me`);
-          setUser(response.data);
-        }
-      } catch (error) {
-        console.error('Failed to load user:', error);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Obter usuário atual
+  const getCurrentUser = async (accessToken) => {
+    try {
+      const res = await axios.get(`${apiUrl}/auth/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setUser(res.data);
+      return { success: true, user: res.data };
+    } catch (err) {
+      console.error("Failed to load user:", err);
+      setUser(null);
+      return { success: false, error: err.response?.data?.detail || err.message };
+    }
+  };
 
-    loadUser();
-  }, []);
-
+  // Login
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, { email, password });
-      const { access_token, refresh_token } = response.data;
-      localStorage.setItem("accessToken", access_token);
-      localStorage.setItem("refreshToken", refresh_token);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
-      const userResponse = await axios.get(`${import.meta.env.VITE_API_URL}/users/me`);
-      setUser(userResponse.data);
-      return { success: true };
-    } catch (error) {
-      console.error("Login failed:", error);
-      return { success: false, error: error.response?.data?.detail || "Erro ao fazer login" };
+      const res = await axios.post(`${apiUrl}/auth/login`, { email, password });
+      const { access_token, refresh_token } = res.data;
+
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem("refresh_token", refresh_token);
+
+      // Busca dados completos do usuário usando o token correto
+      return await getCurrentUser(access_token);
+    } catch (err) {
+      console.error("Login failed:", err);
+      const message = err.response?.data?.detail || "Erro de conexão ou credenciais inválidas";
+      return { success: false, error: message };
     }
   };
 
+  // Registro
   const register = async (full_name, email, password) => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, { full_name, email, password });
-      return { success: true, data: response.data };
-    } catch (error) {
-      console.error("Registration failed:", error);
-      return { success: false, error: error.response?.data?.detail || "Erro ao registrar" };
+      const res = await axios.post(`${apiUrl}/auth/register`, {
+        full_name,
+        email,
+        password,
+      });
+
+      if (res.status === 200 || res.status === 201) {
+        return { success: true };
+      }
+
+      return { success: false, error: "Erro no cadastro" };
+    } catch (err) {
+      console.error("Register failed:", err);
+      const message = err.response?.data?.detail || "Erro de conexão com o servidor";
+      return { success: false, error: message };
     }
   };
 
+  // Logout
   const logout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    delete axios.defaults.headers.common['Authorization'];
     setUser(null);
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
   };
 
+  // Carrega usuário atual ao iniciar app se houver token
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      getCurrentUser(token);
+    }
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => useContext(AuthContext);
-
-
