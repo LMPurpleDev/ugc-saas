@@ -48,11 +48,7 @@ const Register = () => {
       return;
     }
 
-    const result = await register({
-      full_name: formData.full_name,
-      email: formData.email,
-      password: formData.password,
-    });
+    const result = await register(formData.full_name, formData.email, formData.password);
 
     if (result.success) {
       setSuccess(true);

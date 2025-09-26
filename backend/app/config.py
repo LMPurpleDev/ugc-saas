@@ -29,7 +29,12 @@ class Settings(BaseSettings):
     redis_url: str = "redis://redis:6379/0"
     
     # CORS
-    allowed_origins: list = ["http://localhost:3000", "http://frontend:3000"]
+    allowed_origins: list = [
+        "http://localhost:3000", 
+        "http://frontend:3000",
+        "https://3003-ibzzmx3vdhqis3z092zj1-2aceed55.manusvm.computer",
+        "http://localhost:3003"
+    ]
     
     # Comentário: Configuração de modelo atualizada para Pydantic v2 usando SettingsConfigDict.
     model_config = SettingsConfigDict(env_file=".env")
